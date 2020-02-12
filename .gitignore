@@ -1,1 +1,6 @@
 *.exe
+.Rproj.user
+*.Rproj
+1_try.R
+.ipynb_checkpoints
+*.rds
