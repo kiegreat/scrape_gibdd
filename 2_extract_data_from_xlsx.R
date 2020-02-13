@@ -58,7 +58,8 @@ main_data_extraction <- function(worksheet) {
     num_of_participants = df %>% filter(col3 == 'Число участников') %>% pull(col4),
     num_dead = df %>% filter(col5 == 'Число погибших') %>% pull(col6),
     num_injured = df %>% filter(col7 == 'Число раненых') %>% pull(col8)
-  )
+  ) %>% 
+    mutate(timestamp = ymd_hms(str_c(date, ' ', time, ':00')))
   
   return(output)
 }
@@ -75,7 +76,7 @@ helper <- function(x, type = 'participants') {
       is_drunk = x %>% filter(col1 == 'Степень опьянения') %>% pull(col2),
       injuries_category = x %>% filter(col1 == 'Степень тяжести последствий') %>% pull(col2),
       used_safety_belt = x %>% filter(col5 == 'Использовался ли ремень') %>% pull(col6),
-      driving_expirience = x %>% filter(col5 == 'Водительский стаж') %>% pull(col6)
+      driving_expirience = x %>% filter(col5 == 'Водительский стаж') %>% pull(col6),
     ) %>% 
       mutate(vehicle_id = x %>% distinct(car) %>% pull(car))
     
@@ -120,7 +121,8 @@ additional_data_extraction <- function(worksheet, datatype = 'vehicles') {
         date = df %>% filter(col1 == 'Дата:') %>% pull(col2),
         time = df %>% filter(col3 == 'Время:') %>% pull(col4),
         date = as.Date(date, format = '%d.%m.%Y'),
-        timestamp = ymd_hms(str_c(date, ' ', time, ':00'))
+        timestamp = ymd_hms(str_c(date, ' ', time, ':00')),
+        address = df %>% filter(col1 == 'Адрес:') %>% pull(col2)
       ) %>% 
       select(-date, -time)
     
@@ -130,7 +132,8 @@ additional_data_extraction <- function(worksheet, datatype = 'vehicles') {
         date = df %>% filter(col1 == 'Дата:') %>% pull(col2),
         time = df %>% filter(col3 == 'Время:') %>% pull(col4),
         date = as.Date(date, format = '%d.%m.%Y'),
-        timestamp = ymd_hms(str_c(date, ' ', time, ':00'))
+        timestamp = ymd_hms(str_c(date, ' ', time, ':00')),
+        address = df %>% filter(col1 == 'Адрес:') %>% pull(col2)
       ) %>% 
       select(-date, -time)
   } else {
@@ -139,7 +142,8 @@ additional_data_extraction <- function(worksheet, datatype = 'vehicles') {
         date = df %>% filter(col1 == 'Дата:') %>% pull(col2),
         time = df %>% filter(col3 == 'Время:') %>% pull(col4),
         date = as.Date(date, format = '%d.%m.%Y'),
-        timestamp = ymd_hms(str_c(date, ' ', time, ':00'))
+        timestamp = ymd_hms(str_c(date, ' ', time, ':00')),
+        address = df %>% filter(col1 == 'Адрес:') %>% pull(col2)
       ) %>% 
       select(-date, -time)
   }
