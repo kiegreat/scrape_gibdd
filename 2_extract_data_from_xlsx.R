@@ -59,7 +59,7 @@ main_data_extraction <- function(worksheet) {
     num_dead = df %>% filter(col5 == 'Число погибших') %>% pull(col6),
     num_injured = df %>% filter(col7 == 'Число раненых') %>% pull(col8)
   ) %>% 
-    mutate(timestamp = ymd_hms(str_c(date, ' ', time, ':00')))
+    mutate(timestamp = ymd_hms(str_c(as.Date(date, format = '%d.%m.%Y'), ' ', time, ':00')) )
   
   return(output)
 }
@@ -71,26 +71,28 @@ helper <- function(x, type = 'participants') {
   if(type == 'participants') {
     
     result <- data.frame(
+      vehicle_id = x %>% distinct(car) %>% pull(car),
       participant_category = x %>% filter(col1 == 'Категория участника') %>% pull(col2),
       gender = x %>% filter(col1 == 'Пол') %>% pull(col2),
       is_drunk = x %>% filter(col1 == 'Степень опьянения') %>% pull(col2),
       injuries_category = x %>% filter(col1 == 'Степень тяжести последствий') %>% pull(col2),
       used_safety_belt = x %>% filter(col5 == 'Использовался ли ремень') %>% pull(col6),
-      driving_expirience = x %>% filter(col5 == 'Водительский стаж') %>% pull(col6),
-    ) %>% 
-      mutate(vehicle_id = x %>% distinct(car) %>% pull(car))
+      driving_expirience = x %>% filter(col5 == 'Водительский стаж') %>% pull(col6)
+    )
     
   } else {
     
-    result <- data.frame(
-      main_violation = x %>% filter(col1 == 'Непосредственные нарушения ПДД') %>% pull(col2)#,
-      #additional_violations = x %>% filter(col1 == 'Сопутствующие нарушения ПДД') %>% pull(col2)
-    ) %>% 
-      mutate(vehicle_id = x %>% distinct(car) %>% pull(car))
+    if(length(unique(x$car)) == length(x %>% filter(col1 == 'Непосредственные нарушения ПДД') %>% pull(col2))) {
+      result <- data.frame(
+        vehicle_id = x %>% distinct(car) %>% pull(car),
+        main_violation = x %>% filter(col1 == 'Непосредственные нарушения ПДД') %>% pull(col2)
+      )
+    } else { }
   }
   
   return(result)
 }
+helper_possible <- possibly(.f = helper, otherwise = NULL)
 
 additional_data_extraction <- function(worksheet, datatype = 'vehicles') {
   
@@ -103,7 +105,8 @@ additional_data_extraction <- function(worksheet, datatype = 'vehicles') {
     fill(car) %>% 
     select(car) %>% 
     bind_cols(df) %>% 
-    filter(!is.na(car))
+    filter(!is.na(car)) %>% 
+    group_split(car)
   
   if(datatype == 'vehicles') {
     
@@ -127,7 +130,7 @@ additional_data_extraction <- function(worksheet, datatype = 'vehicles') {
       select(-date, -time)
     
   } else if(datatype == 'participants') {
-    result <- map_df(.x = cars %>% split(f = cars$car), .f = ~helper(.x, type = 'participants')) %>% 
+    result <- map_df(.x = cars, .f = ~helper(.x, type = 'participants')) %>% 
       mutate(
         date = df %>% filter(col1 == 'Дата:') %>% pull(col2),
         time = df %>% filter(col3 == 'Время:') %>% pull(col4),
@@ -137,7 +140,7 @@ additional_data_extraction <- function(worksheet, datatype = 'vehicles') {
       ) %>% 
       select(-date, -time)
   } else {
-    result <- map_df(.x = cars %>% split(f = cars$car), .f = ~helper(.x, type = 'violations')) %>% 
+    result <- map_df(.x = cars, .f = ~helper_possible(.x, type = 'violations')) %>% 
       mutate(
         date = df %>% filter(col1 == 'Дата:') %>% pull(col2),
         time = df %>% filter(col3 == 'Время:') %>% pull(col4),
@@ -172,8 +175,6 @@ main_function <- function(filename, datatype = 'main') {
   
   return(result)
 }
-
-
 
 # 4. Launch:
 
