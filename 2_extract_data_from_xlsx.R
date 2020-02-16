@@ -3,14 +3,12 @@ library(readxl)
 library(tidyverse)
 library(lubridate)
 
-# 1. Get all names of zip files
+# 1. Get all names of zip files ----
 
 if(dir.exists('data/xlsx')) { print('Folder is ready') } else { dir.create(path = 'data/xlsx') }
 f <- list.files(path = 'data', pattern = '.zip')
 
-
-
-# 2. Explore how many columns and rows are there in each file and on every worksheet inside
+# 2. Explore how many columns and rows are there in each file and on every worksheet inside ----
 
 eda_function <- function(x) {
   
@@ -32,9 +30,7 @@ unique(df_eda$nrows)
 
 # Good news: there are always 8 columns. But the number of rows always differs :(
 
-
-
-# 3. Get data from all xls files
+# 3. Get data from all xls files ----
 
 # Function for main data extraction from a worksheet:
 
@@ -176,12 +172,56 @@ main_function <- function(filename, datatype = 'main') {
   return(result)
 }
 
-# 4. Launch:
+# 4. Launch ----
 
-main_data <- map_df(.x = f, .f = ~main_function(filename = .x, datatype = 'main')); saveRDS(main_data, 'main_data.rds')
-vehicles_data <- map_df(.x = f, .f = ~main_function(filename = .x, datatype = 'vehicles')); saveRDS(vehicles_data, 'vehicles_data.rds')
-participants_data <- map_df(.x = f, .f = ~main_function(filename = .x, datatype = 'participants')); saveRDS(participants_data, 'participants_data.rds')
-violations_data <- map_df(.x = f, .f = ~main_function(filename = .x, datatype = 'violations')); saveRDS(violations_data, 'violations_data.rds')
+main_data <- map_df(.x = f, .f = ~main_function(filename = .x, datatype = 'main'))
+vehicles_data <- map_df(.x = f, .f = ~main_function(filename = .x, datatype = 'vehicles'))
+participants_data <- map_df(.x = f, .f = ~main_function(filename = .x, datatype = 'participants'))
+violations_data <- map_df(.x = f, .f = ~main_function(filename = .x, datatype = 'violations'))
+
+# 5. Postprocessing ----
+
+vehicles_data <- vehicles_data %>% 
+  mutate(
+    address = str_replace_all(address, pattern = ',$', replacement = ''),
+    year = as.numeric(year),
+    color = ifelse(color == 'Не заполнено', NA, color),
+    engine_location = ifelse(engine_location == 'Не заполнено', NA, engine_location),
+    engine_location = case_when(
+      engine_location %in% c("С передним приводом", "Передний") ~ 'Передний',
+      engine_location %in% c("С задним приводом", "Задний") ~ 'Задний',
+      engine_location %in% c("Иное расположение рулевого управления", "Иной") ~ 'Иной',
+      engine_location %in% c("Полноприводные", "Полноприводный") ~ 'Полноприводный'
+    ),
+    is_escaped = case_when(
+      is_escaped %in% c("Осталось на месте ДТП", "Нет") ~ "Нет",
+      is_escaped %in% c(
+        "Скрылось с места ДТП", 
+        "Скрылось и установлено в срок до 1 суток", 
+        "Да",
+        "Скрылось и установлено в срок от 1 до 3 суток", 
+        "Скрылось и установлено в срок от 3 до 10 суток",
+        "от 1  до 3 сут.",
+        "до 1 сут.", 
+        "свыше 10 сут.",
+        "от 3 до 10 сут."
+      ) ~ "Да"
+    )
+  )
+
+participants_data <- participants_data %>% 
+  mutate(
+    address = str_replace_all(address, pattern = ',$', replacement = ''),
+    driving_expirience = as.numeric(driving_expirience)
+  )
+
+violations_data <- violations_data %>% 
+  mutate(address = str_replace_all(address, pattern = ',$', replacement = ''))
+
+saveRDS(main_data, 'main_data.rds')
+saveRDS(vehicles_data, 'vehicles_data.rds')
+saveRDS(participants_data, 'participants_data.rds')
+saveRDS(violations_data, 'violations_data.rds')
 
 
 
