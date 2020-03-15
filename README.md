@@ -17,3 +17,12 @@ source / источник - www.stat.gibdd.ru
 Data description / Описание данных:
 
 ![Data dictionary](https://sun9-29.userapi.com/c205124/v205124508/715cd/afGUSIYkGMM.jpg)
+
+Visualizations / Визуализации:
+
+![Map of road accidents](https://sun9-51.userapi.com/c858120/v858120508/180864/cw27WkXqhE8.jpg)
+
+![Histogram of accidents by season and time of the day](https://sun9-46.userapi.com/c858120/v858120508/18085a/cZeMLVSNFLU.jpg)
+
+
+
