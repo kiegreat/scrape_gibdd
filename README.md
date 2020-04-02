@@ -5,7 +5,7 @@ source / источник - www.stat.gibdd.ru
 ### English
 
 1. Scraping is performed in Python using Selenium WebDriver
-2. Postprocessing, cleaning and analysis of the data had been done in R
+2. Postprocessing, cleaning and analysis of the data has been done in R
 3. Data from the start of 2015 until the end of November 2019 is stored in 'csv' folder
 
 ### Русский
